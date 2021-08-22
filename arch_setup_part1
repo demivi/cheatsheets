@@ -9,13 +9,15 @@ loadkeys fr-latin9
 ("ls /usr/share/kbd/keymaps/**/*.map.gz" to list available layouts)
 (you can first do "loadkeys fr" if you don't know where "-" is in qwerty)
 
+Verify the boot mode, if this directory exists, boot mode is UEFI:
+ls /sys/firmware/efi/
+
 Make sure you have Internet access.
 I advise you to use tmux so you can have this file next to your command prompt
 and can copy and paste blocks of commands (delimited by ```).
 
 Clone the repo:
--pacman -Syy
--pacman -S git
+-pacman -Syy git
 -git clone https://github/com/demivi/cheatsheet
 
 Or download this file directly:
