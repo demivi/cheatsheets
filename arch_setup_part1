@@ -7,12 +7,18 @@ disable Secure boot, enable UEFI mode
 Once booted:
 loadkeys fr-latin9
 ("ls /usr/share/kbd/keymaps/**/*.map.gz" to list available layouts)
+(you can first do "loadkeys fr" if you don't know where "-" is in qwerty)
 
-Make sure you have Internet access
+Make sure you have Internet access.
 I advise you to use tmux so you can have this file next to your command prompt
-and can copy and paste blocks of commands (delimited by ```)
+and can copy and paste blocks of commands (delimited by ```).
 
-Download this file
+Clone the repo:
+-pacman -Syy
+-pacman -S git
+-git clone https://github/com/demivi/cheatsheet
+
+Or download this file directly:
 curl https://raw.githubusercontent.com/demivi/cheatsheets/master/arch_setup_part1 -o arch_setup_part1
 
 Change relevant parts of this file beforehand if you want to copy and paste:
@@ -25,9 +31,6 @@ Change relevant parts of this file beforehand if you want to copy and paste:
 -keymap settings (same as the loadkeys command before)
 -hostname
 -username
-
-Install tmux:
-pacman -Sy tmux
 
 In case you don't know tmux or aren't familiar with the default bindings, do the following:
 - tmux -> start tmux
@@ -85,11 +88,11 @@ swapon /dev/lvmgroup/swap
 curl -sL "https://archlinux.org/mirrorlist/?country=FR&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' > /etc/pacman.d/mirrorlist
 pacman -Syy
 pacstrap /mnt base base-devel dhcpcd linux linux-firmware lvm2 mkinitcpio polkit vi
+genfstab -U /mnt >> /mnt/etc/fstab
+arch-chroot /mnt
 ```
 
 ```
-genfstab -U /mnt >> /mnt/etc/fstab
-arch-chroot /mnt
 ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
