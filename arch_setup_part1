@@ -17,22 +17,23 @@ I advise you to use tmux so you can have this file next to your command prompt
 and can copy and paste blocks of commands (delimited by ```).
 
 Clone the repo:
--pacman -Syy git
--git clone https://github/com/demivi/cheatsheet
+reflector
+pacman -Syy git
+git clone https://github/com/demivi/cheatsheet
 
 Or download this file directly:
 curl https://raw.githubusercontent.com/demivi/cheatsheets/master/arch_setup_part1 -o arch_setup_part1
 
 Change relevant parts of this file beforehand if you want to copy and paste:
--size and number of LVM groups
--name of devices (here main device is /dev/sda)
--name of partitions (here /dev/sda1 for /boot and /dev/sda2 for /)
--country in curl command to get the mirrorlist
--timezone region and city ("ls /usr/share/zoneinfo/" for a list of available ones)
--locale settings (available ones in "/etc/locale.gen")
--keymap settings (same as the loadkeys command before)
--hostname
--username
+- size and number of LVM groups
+- name of devices (here main device is /dev/sda)
+- name of partitions (here /dev/sda1 for /boot and /dev/sda2 for /)
+- country in curl command to get the mirrorlist
+- timezone region and city ("ls /usr/share/zoneinfo/" for a list of available ones)
+- locale settings (available ones in "/etc/locale.gen")
+- keymap settings (same as the loadkeys command before)
+- hostname
+- username
 
 In case you don't know tmux or aren't familiar with the default bindings, do the following:
 - tmux -> start tmux
@@ -71,6 +72,7 @@ Now you can start copying and pasting by:
 - once every command is done, go back to the first step
 
 ```
+boot_partition='sda1'
 pvcreate /dev/mapper/luks
 vgcreate lvmgroup /dev/mapper/luks
 lvcreate -L 8G lvmgroup -n swap
@@ -83,7 +85,6 @@ mount /dev/lvmgroup/root /mnt
 mkdir /mnt/home
 mkdir /mnt/boot
 mount /dev/lvmgroup/home /mnt/home
-boot_partition='sda1'
 mkfs.fat -F32 /dev/"$boot_partition"
 mount /dev/"$boot_partition" /mnt/boot
 swapon /dev/lvmgroup/swap
@@ -95,13 +96,14 @@ arch-chroot /mnt
 ```
 
 ```
+encrypted_partition='sda2'
+machine_name='myhostname'
 ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 locale-gen
 echo 'LANG=en_US.UTF-8' > /etc/locale.conf
 echo 'KEYMAP=fr-latin9' > /etc/vconsole.conf
-machine_name='myhostname'
 echo "$machine_name" > /etc/hostname
 echo -e "127.0.0.1 localhost\n::1 localhost\n127.0.1.1 $machine_name" > /etc/hosts
 sed -i 's/^HOOKS.*/HOOKS=(base udev autodetect keyboard keymap modconf block encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
@@ -109,7 +111,7 @@ mkinitcpio -p linux
 bootctl --path=/boot install
 cd /boot/loader
 echo -e 'default arch.conf\ntimeout 3' > loader.conf
-UUID=$(blkid -s UUID -o value /dev/sda2)
+UUID=$(blkid -s UUID -o value /dev/"$encrypted_partition")
 echo "title Arch Linux
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
