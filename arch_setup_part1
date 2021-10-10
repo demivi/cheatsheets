@@ -4,6 +4,8 @@ sudo dd bs=4M if=archlinux-*.iso of=/dev/sdX status=progress oflag=sync
 In the BIOS:
 disable Secure boot, enable UEFI mode
 
+This cheatsheet covers a French configuration example, change the relevant parts to fit your needs.
+
 Once booted:
 loadkeys fr-latin9
 ("ls /usr/share/kbd/keymaps/**/*.map.gz" to list available layouts)
