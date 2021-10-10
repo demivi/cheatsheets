@@ -1,4 +1,4 @@
-Make a bootable USB:
+Make a bootable USB drive once you've downloaded an Arch iso:
 sudo dd bs=4M if=archlinux-*.iso of=/dev/sdX status=progress oflag=sync
 
 In the BIOS:
@@ -7,14 +7,14 @@ disable Secure boot, enable UEFI mode
 Once booted:
 loadkeys fr-latin9
 ("ls /usr/share/kbd/keymaps/**/*.map.gz" to list available layouts)
-(you can first do "loadkeys fr" if you don't know where "-" is in qwerty)
+(tip: you can first load "fr" if you don't know where "-" is in qwerty, then "fr-latin9")
 
-Verify the boot mode, if this directory exists, boot mode is UEFI:
+Verify your boot mode, if this directory exists, boot mode is UEFI:
 ls /sys/firmware/efi/
 
 Make sure you have Internet access.
 I advise you to use tmux so you can have this file next to your command prompt
-and can copy and paste blocks of commands (delimited by ```).
+and can copy and paste blocks of commands (delimited below by ```).
 
 Clone the repo:
 reflector
@@ -22,12 +22,15 @@ pacman -Syy git
 git clone https://github/com/demivi/cheatsheet
 
 Or download this file directly:
-curl https://raw.githubusercontent.com/demivi/cheatsheets/master/arch_setup_part1 -o arch_setup_part1
+curl https://raw.githubusercontent.com/demivi/cheatsheets/master/arch_setup_part1 -o setup_p1
+
+Find out your device names (add "-f" to get UUIDs):
+lsblk
 
 Change relevant parts of this file beforehand if you want to copy and paste:
 - size and number of LVM groups
-- name of devices (here main device is /dev/sda)
-- name of partitions (here /dev/sda1 for /boot and /dev/sda2 for /)
+- name of devices (here main device is /dev/nvme0n1)
+- name of partitions (here /dev/nvme0n1p1 for /boot and /dev/nvme0n1p2 for /)
 - country in curl command to get the mirrorlist
 - timezone region and city ("ls /usr/share/zoneinfo/" for a list of available ones)
 - locale settings (available ones in "/etc/locale.gen")
@@ -43,13 +46,14 @@ In case you don't know tmux or aren't familiar with the default bindings, do the
 - ctrl-b o -> switch back to prompt pane
 
 If you had any existing partitions, make sure your disklabel type is GPT:
-fdisk -l /dev/sda
+fdisk -l /dev/nvme0n1
+(look for the "Disklabel type:" line, if you can't find it you're fine)
 
-If your disklabel is MBR or BSD, you can use this command to converyt to GPT:
-sgdisk -g /dev/sda
+If your disklabel is MBR or BSD, you can use this command to convert it to GPT:
+sgdisk -g /dev/nvme0n1
 
 Start the cfdisk utility:
-cfdisk /dev/sda
+cfdisk /dev/nvme0n1
 
 Delete everything and create the following partitions
 Boot partition: New -> 256M -> Type -> EFI System
@@ -57,8 +61,8 @@ Main partition: New -> the rest -> Type -> Linux filesystem
 Write then exit
 
 Setup a LUKS container:
-cryptsetup luksFormat --type luks2 /dev/sda2
-cryptsetup open /dev/sda2 luks
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
+cryptsetup open /dev/nvme0n1p2 luks
 
 Now you can start copying and pasting by:
 - ctrl-b o switch back to this pane
@@ -71,33 +75,33 @@ Now you can start copying and pasting by:
 - Ctrl-b ] to paste
 - once every command is done, go back to the first step
 
+Don't forget to read the output of the below commands carefully in case of errors.
+
 ```
-boot_partition='sda1'
+boot_partition='nvme0n1p1'
 pvcreate /dev/mapper/luks
 vgcreate lvmgroup /dev/mapper/luks
 lvcreate -L 8G lvmgroup -n swap
-lvcreate -L 50G lvmgroup -n root
-lvcreate -l 100%FREE lvmgroup -n home
+lvcreate -l 100%FREE lvmgroup -n root
 mkfs.ext4 /dev/lvmgroup/root
-mkfs.ext4 /dev/lvmgroup/home
 mkswap /dev/lvmgroup/swap
 mount /dev/lvmgroup/root /mnt
-mkdir /mnt/home
 mkdir /mnt/boot
-mount /dev/lvmgroup/home /mnt/home
 mkfs.fat -F32 /dev/"$boot_partition"
 mount /dev/"$boot_partition" /mnt/boot
 swapon /dev/lvmgroup/swap
 curl -sL "https://archlinux.org/mirrorlist/?country=FR&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' > /etc/pacman.d/mirrorlist
 pacman -Syy
-pacstrap /mnt base base-devel dhcpcd linux linux-firmware lvm2 mkinitcpio polkit vi
+pacstrap /mnt base base-devel linux linux-firmware lvm2 mkinitcpio polkit vi man-db
 genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 ```
 
 ```
-encrypted_partition='sda2'
+encrypted_partition='nvme0n1p2'
 machine_name='myhostname'
+systemctl enable systemd-networkd
+systemctl enable systemd-resolved
 ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
@@ -141,3 +145,13 @@ vi /etc/sudoers -> uncomment the "%wheel ALL=(ALL) ALL" line
 exit
 umount -R /mnt
 poweroff
+
+Here are a few things you might want to install now:
+- a terminal emulator (urxvt, alacritty...)
+- tmux
+- xorg-server and xorg-xinit
+- a windows manager
+- graphics drivers if using an nvidia card
+- alsa-utils, pulseaudio, pulseaudio-alsa, pavucontrol for audio
+- a browser
+- keepassxc
